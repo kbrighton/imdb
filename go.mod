@@ -1,4 +1,4 @@
-module imdb
+module github.com/kbrighton/imdb
 
 go 1.15
 
