@@ -8,6 +8,8 @@ COPY . .
 RUN go get -d -v ./...
 RUN go install -v ./...
 RUN go build /go/src/imdb
+RUN wget https://datasets.imdbws.com/title.basics.tsv.gz
+RUN gunzip title.basics.tsv.gz
 
 ENV HOST 0.0.0.0
 ENV PORT 8080

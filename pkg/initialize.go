@@ -76,7 +76,7 @@ func Initialize() *pg.DB {
 
 	//I wish this didn't take forever
 	//CopyFrom makes it not take forever!
-	movieFile, err := os.Open("./data.tsv")
+	movieFile, err := os.Open("./title.basics.tsv")
 	if err != nil {
 		panic("I could not find the movies tsv")
 	}
@@ -91,7 +91,7 @@ func Initialize() *pg.DB {
 
 //This will convert the initial seeded data to a format we can use
 //Runs as goroutine
-func MigrateDate(db *pg.DB) {
+func MigrateData(db *pg.DB) {
 	var rawmovie []RawMovie
 
 	db.Model(&rawmovie).Where("tconst <> 'tconst'").Select()

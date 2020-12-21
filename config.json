@@ -1,0 +1,7 @@
+{
+  "Password": "L4RPEverywhere!",
+  "User": "postgres",
+  "Database": "imdb",
+  "Host": "192.168.1.251:32775",
+  "Port": 32775
+}
