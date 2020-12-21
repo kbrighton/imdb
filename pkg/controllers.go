@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -19,13 +18,14 @@ type Configuration struct {
 func GetTconst(c *gin.Context) {
 
 	var movie Movie
-	var genreName []string
+	genreName := make([]string, 0)
 
 	tconst := c.Param("tconst")
 
 	err := Manager.Model(&movie).Relation("Genres").Where("tconst = ?", tconst).Select()
-	fmt.Println(err)
-
+	if err != nil {
+		panic(err)
+	}
 	for _, iterator := range movie.Genres {
 		genreName = append(genreName, iterator.Genre)
 	}
@@ -51,10 +51,11 @@ func GetStartYear(c *gin.Context) {
 		})
 	} else {
 		count, err := Manager.Model(&movie).Relation("Genres").Where("start_year = ?", startYear).SelectAndCount()
-		fmt.Println(err)
-
+		if err != nil {
+			panic(err)
+		}
 		for movIdx, _ := range movie {
-			var genreName []string
+			genreName := make([]string, 0)
 
 			for _, iterator := range movie[movIdx].Genres {
 				genreName = append(genreName, iterator.Genre)
@@ -80,7 +81,9 @@ func GetGenre(c *gin.Context) {
 	genre := strings.Title(c.Param("genre"))
 
 	err := Manager.Model(&genres).Relation("Movies").Where("genre = ?", genre).Select()
-	fmt.Println(err)
+	if err != nil {
+		panic(err)
+	}
 
 	for _, iterator := range genres.Movies {
 		movieIds = append(movieIds, strconv.Itoa(iterator.Id))
@@ -89,10 +92,12 @@ func GetGenre(c *gin.Context) {
 	csvIds := strings.Join(movieIds, ",")
 
 	count, err := Manager.Model(&movie).Relation("Genres").Where("id in (" + csvIds + ")").SelectAndCount()
-	fmt.Println(err)
+	if err != nil {
+		panic(err)
+	}
 
 	for movIdx, _ := range movie {
-		var genreName []string
+		genreName := make([]string, 0)
 
 		for _, iterator := range movie[movIdx].Genres {
 			genreName = append(genreName, iterator.Genre)

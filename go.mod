@@ -16,7 +16,7 @@ require (
 	github.com/lib/pq v1.9.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/spf13/viper v1.7.1 // indirect
+	github.com/spf13/viper v1.7.1
 	github.com/tkanos/gonfig v0.0.0-20181112185242-896f3d81fadf
 	github.com/ugorji/go v1.2.1 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.1.0 // indirect
