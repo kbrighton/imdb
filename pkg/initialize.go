@@ -102,29 +102,25 @@ func Initialize() *pg.DB {
 //This will convert the initial seeded data to a format we can use
 //Runs as goroutine
 func MigrateData(db *pg.DB) {
-	var rawmovie []RawMovie
-
-	db.Model(&rawmovie).Where("tconst <> 'tconst'").Select()
-
-	for _, iterator := range rawmovie {
+	err := db.Model((*RawMovie)(nil)).Where("tconst <> 'tconst'").ForEach(func(rm *RawMovie) error {
 		var movie Movie
 		var genres []Genre
 		var genre Genre
 		var moviesgenres MoviesGenres
 
-		movie.Tconst = iterator.Tconst
-		movie.TitleType = iterator.TitleType
-		movie.PrimaryTitle = iterator.PrimaryTitle
-		movie.OriginalTitle = iterator.OriginalTitle
-		movie.IsAdult, _ = strconv.ParseBool(iterator.IsAdult)
-		movie.StartYear, _ = strconv.Atoi(iterator.StartYear)
-		movie.EndYear, _ = strconv.Atoi(iterator.EndYear)
-		movie.RuntimeMinutes, _ = strconv.Atoi(iterator.RuntimeMinutes)
+		movie.Tconst = rm.Tconst
+		movie.TitleType = rm.TitleType
+		movie.PrimaryTitle = rm.PrimaryTitle
+		movie.OriginalTitle = rm.OriginalTitle
+		movie.IsAdult, _ = strconv.ParseBool(rm.IsAdult)
+		movie.StartYear, _ = strconv.Atoi(rm.StartYear)
+		movie.EndYear, _ = strconv.Atoi(rm.EndYear)
+		movie.RuntimeMinutes, _ = strconv.Atoi(rm.RuntimeMinutes)
 
 		db.Model(&movie).Insert()
 
 		genres = genres[:0]
-		genreString := strings.Split(iterator.Genres, ",")
+		genreString := strings.Split(rm.Genres, ",")
 
 		for _, stringName := range genreString {
 			db.Model(&genre).Where("genre = ?", stringName).Select()
@@ -132,5 +128,10 @@ func MigrateData(db *pg.DB) {
 			moviesgenres.MovieId = movie.Id
 			db.Model(&moviesgenres).Insert()
 		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
 	}
+
 }
