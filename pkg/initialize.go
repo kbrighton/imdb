@@ -2,10 +2,9 @@ package pkg
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
-	"github.com/tkanos/gonfig"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -14,17 +13,28 @@ import (
 
 //Sets up the initial database connection and creates tables if they don't exist
 func Initialize() *pg.DB {
-	configuration := Configuration{}
-	err := gonfig.GetConf("config.json", &configuration)
+
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	viper.AutomaticEnv()
+	viper.SetConfigType("json")
+
+	var config Configurations
+
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
+	}
+
+	err := viper.Unmarshal(&config)
 	if err != nil {
-		fmt.Println(err)
+		panic("Couldn't decode into struct")
 	}
 
 	db := pg.Connect(&pg.Options{
-		Addr:     configuration.Host,
-		User:     configuration.User,
-		Password: configuration.Password,
-		Database: configuration.Database,
+		Addr:     config.IMDB_DB_HOST,
+		User:     config.IMDB_DB_USER,
+		Password: config.IMDB_DB_PASSWORD,
+		Database: config.IMDB_DB_NAME,
 	})
 
 	ctx := context.Background()

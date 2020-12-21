@@ -42,3 +42,10 @@ type RawMovie struct {
 	RuntimeMinutes string `json:"runtimeMinutes,omitempty"`
 	Genres         string `json:"genres"`
 }
+
+type Configurations struct {
+	IMDB_DB_PASSWORD string
+	IMDB_DB_USER     string
+	IMDB_DB_NAME     string
+	IMDB_DB_HOST     string
+}
