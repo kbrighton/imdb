@@ -30,3 +30,15 @@ type MoviesGenres struct {
 	MovieId int
 	GenreId int
 }
+
+type RawMovie struct {
+	Tconst         string `json:"tconst"`
+	TitleType      string `json:"titleType"`
+	PrimaryTitle   string `json:"primaryTitle"`
+	OriginalTitle  string `json:"originalTitle"`
+	IsAdult        string `json:"isAdult" pg:",use_zero"`
+	StartYear      string `json:"startYear,omitempty"`
+	EndYear        string `json:"endYear,omitempty"`
+	RuntimeMinutes string `json:"runtimeMinutes,omitempty"`
+	Genres         string `json:"genres"`
+}

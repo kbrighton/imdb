@@ -6,8 +6,13 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/tkanos/gonfig"
+	"io/ioutil"
+	"os"
+	"strconv"
+	"strings"
 )
 
+//Sets up the initial database connection and creates tables if they don't exist
 func Initialize() *pg.DB {
 	configuration := Configuration{}
 	err := gonfig.GetConf("config.json", &configuration)
@@ -22,8 +27,6 @@ func Initialize() *pg.DB {
 		Database: configuration.Database,
 	})
 
-	//db, err := gorm.Open("postgres", url)
-	//db.LogMode(true)
 	ctx := context.Background()
 	if err := db.Ping(ctx); err != nil {
 		panic("Could not connect to database")
@@ -31,97 +34,93 @@ func Initialize() *pg.DB {
 
 	orm.RegisterTable((*MoviesGenres)(nil))
 
-	//db.AutoMigrate(&Movies{}, &Genres{})
-	/*
-		//Prepopulating Genres to get past some GORM
-		//annoyances with many2many associations
-		genreFile, err := os.Open("./genres.csv")
+	models := []interface{}{
+		(*Movie)(nil),
+		(*Genre)(nil),
+		(*MoviesGenres)(nil),
+		(*RawMovie)(nil),
+	}
+
+	for _, model := range models {
+		err = db.Model(model).CreateTable(&orm.CreateTableOptions{
+			IfNotExists: true,
+		})
 		if err != nil {
-			panic("I could not find the genres csv")
+			panic(err)
 		}
+	}
 
-		gen, err := ioutil.ReadAll(genreFile)
-		if err != nil {
-			panic("Issue with readall on genre file")
-		}
+	//Prepopulating Genres to get past some go-pg
+	//annoyances with many2many associations
+	genreFile, err := os.Open("./genres.csv")
+	if err != nil {
+		panic("I could not find the genres csv")
+	}
 
-		genCsv := string(gen)
+	gen, err := ioutil.ReadAll(genreFile)
+	if err != nil {
+		panic("Issue with readall on genre file")
+	}
 
-		genreString := strings.Split(genCsv, ",")
+	genCsv := string(gen)
 
-		for _, element := range genreString {
-			var genre Genres
+	genreString := strings.Split(genCsv, ",")
 
-			genre.Genre = element
+	for _, element := range genreString {
+		var genre Genre
 
-			db.Create(&genre)
-		}
+		genre.Genre = element
 
-		//I wish this didn't take forever
-		movieFile, err := os.Open("./data.tsv")
-		if err != nil {
-			panic("I could not find the movies tsv")
-		}
+		db.Model(&genre).Insert()
+	}
 
-		reader := csv.NewReader(movieFile)
-		reader.Comma = '\t'
-		reader.LazyQuotes = true
+	//I wish this didn't take forever
+	//CopyFrom makes it not take forever!
+	movieFile, err := os.Open("./data.tsv")
+	if err != nil {
+		panic("I could not find the movies tsv")
+	}
 
-		//Skip the header
-		_, readerErr := reader.Read()
-		if readerErr != nil {
-			panic("Could not read the header")
-		}
-
-		//var movies []Movies
-
-		for {
-			row, err := reader.Read()
-			if err == io.EOF {
-				break
-			}
-
-			var movie Movie
-			var genres []Genre
-			var genre Genre
-			var moviesgenres MoviesGenres
-
-			movie.Tconst = row[0]
-			movie.TitleType = row[1]
-			movie.PrimaryTitle = row[2]
-			movie.OriginalTitle = row[3]
-			movie.IsAdult, _ = strconv.ParseBool(row[4])
-
-			if row[5] != "\\N" {
-				movie.StartYear, _ = strconv.Atoi(row[5])
-			}
-
-			if row[6] != "\\N" {
-				movie.EndYear, _ = strconv.Atoi(row[6])
-			}
-
-			if row[7] != "\\N" {
-				movie.RuntimeMinutes, _ = strconv.Atoi(row[7])
-			}
-
-			db.Model(&movie).Insert()
-
-			genres = genres[:0]
-			genreString := strings.Split(row[8], ",")
-
-			for _, stringName := range genreString {
-				if stringName == "\\N" {
-					break
-				}
-				db.Model(&genre).Where("genre = ?", stringName).Select()
-				moviesgenres.GenreId = genre.Id
-				moviesgenres.MovieId = movie.Id
-				db.Model(&moviesgenres).Insert()
-			}
-
-		}
-
-	*/
+	_, err = db.CopyFrom(movieFile, "COPY raw_movies FROM STDIN DELIMITER '\t'")
+	if err != nil {
+		panic(err)
+	}
 
 	return db
+}
+
+//This will convert the initial seeded data to a format we can use
+//Runs as goroutine
+func MigrateDate(db *pg.DB) {
+	var rawmovie []RawMovie
+
+	db.Model(&rawmovie).Where("tconst <> 'tconst'").Select()
+
+	for _, iterator := range rawmovie {
+		var movie Movie
+		var genres []Genre
+		var genre Genre
+		var moviesgenres MoviesGenres
+
+		movie.Tconst = iterator.Tconst
+		movie.TitleType = iterator.TitleType
+		movie.PrimaryTitle = iterator.PrimaryTitle
+		movie.OriginalTitle = iterator.OriginalTitle
+		movie.IsAdult, _ = strconv.ParseBool(iterator.IsAdult)
+		movie.StartYear, _ = strconv.Atoi(iterator.StartYear)
+		movie.EndYear, _ = strconv.Atoi(iterator.EndYear)
+		movie.RuntimeMinutes, _ = strconv.Atoi(iterator.RuntimeMinutes)
+
+		db.Model(&movie).Insert()
+
+		genres = genres[:0]
+		genreString := strings.Split(iterator.Genres, ",")
+
+		for _, stringName := range genreString {
+			db.Model(&genre).Where("genre = ?", stringName).Select()
+			moviesgenres.GenreId = genre.Id
+			moviesgenres.MovieId = movie.Id
+			db.Model(&moviesgenres).Insert()
+		}
+	}
 }
