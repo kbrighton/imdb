@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	. "github.com/kbrighton/imdb/pkg"
+	"net/http"
 )
 
 func main() {
@@ -10,6 +11,12 @@ func main() {
 	//Database is a singleton
 	Manager = Initialize()
 	r := gin.Default()
+
+	r.GET("/", func(context *gin.Context) {
+		context.JSON(http.StatusOK, gin.H{
+			"body": "OK",
+		})
+	})
 
 	//Versioning API
 	api := r.Group("/api/v1")
