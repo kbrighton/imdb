@@ -3,7 +3,6 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/tkanos/gonfig"
@@ -21,9 +20,6 @@ func Initialize() *pg.DB {
 		User:     configuration.User,
 		Password: configuration.Password,
 		Database: configuration.Database,
-	})
-	db.AddQueryHook(pgdebug.DebugHook{
-		Verbose: true,
 	})
 
 	//db, err := gorm.Open("postgres", url)

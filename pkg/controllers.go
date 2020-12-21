@@ -77,7 +77,7 @@ func GetGenre(c *gin.Context) {
 	var movieIds []string
 	var movie []Movie
 
-	genre := c.Param("genre")
+	genre := strings.Title(c.Param("genre"))
 
 	err := Manager.Model(&genres).Relation("Movies").Where("genre = ?", genre).Select()
 	fmt.Println(err)
