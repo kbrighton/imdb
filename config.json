@@ -1,5 +1,5 @@
 {
-  "IMDB_DB_PASSWORD": "L4RPEverywhere!",
+  "IMDB_DB_PASSWORD": "",
   "IMDB_DB_USER": "postgres",
   "IMDB_DB_NAME": "imdb",
   "IMDB_DB_HOST": "192.168.1.251:32775"
